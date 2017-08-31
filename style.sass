@@ -19,10 +19,18 @@ body
   top: 0
   left: 0
 
+  &.draggable
+    cursor: move /* fallback if grab cursor is unsupported */
+    cursor: grab
+    cursor: -moz-grab
+    cursor: -webkit-grab
+
   &.horizontal
     overflow: hidden
     width: auto
     white-space: nowrap
+    padding-left: 10vw
+    padding-right: 10vw
 
     .block
       display: inline-block
@@ -62,18 +70,14 @@ body
   transition: 1s opacity ease-in-out
   transition-delay: 0.5s
 
-.horizontal ~ #jmooth_scrollbar
+.horizontal ~ #jmooth_scrollbar,
+#jmooth_scrollbar.horizon_scrollbar
   width: 160px
   height: 6px
   right: auto
   top: auto
   left: 0
   bottom: 0
-
-.im_scrolling #jmooth_scrollbar
-  opacity: 1
-  transition: 0.3s opacity ease-in-out
-  transition-delay: 0s
 
 #jmooth_scrollprogress
   position: fixed
@@ -83,6 +87,15 @@ body
   top: 0
   left: 0
   z-index: 9999
+
+.im_scrolling
+  #jmooth_scrollbar
+    opacity: 1
+    transition: 0.3s opacity ease-in-out
+    transition-delay: 0s
+
+  .block
+    pointer-events: none
 
 .block
   position: relative

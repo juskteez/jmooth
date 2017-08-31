@@ -3,54 +3,55 @@
  * Description: A native javascript smooth scroll experience experiment
  * Author: Juskteez
  * Contact: juskteez@gmail.com
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
-var content    = document.getElementById('content'),
-  scrlBar      = document.createElement('DIV'),
-  scrlPrg      = document.createElement('DIV'),
-  blockIMGs    = document.getElementsByClassName('block-image'),
-  $body        = document.body,
-  cStyle       = content.style,
-  sStyle       = scrlBar.style,
-  pStyle       = scrlPrg.style,
-  scrollYaxis  = 0, // default scroll position
-  scrollXaxis  = 0, // default horizontal scroll position
-  scrollPos    = 0, // default scroll value
-  scrBarPos    = 0, // default scrollbar pos
-  scrProgess   = 0, // default scrollbar progress
-  prlxPos      = 0, // default parallax position
-  loaded       = false,
-  theAxis      = false,
-  progress     = true,
-  //demo        = document.getElementById('demo'), // log element
-  //otY         = document.getElementById('otY'), // log element
-  //mxY         = document.getElementById('mxY'), // log element
-  //mnY         = document.getElementById('mnY'), // log element
-  //ocY         = document.getElementById('ocY'); // log element
-  trF, scF, bodyH, wdH, vsbH, bodyW, wdW, vsbW, scrPrcs, clearScroll,i;
+var scroll_Content         = document.getElementById('content'),
+  scroll_Bar               = document.createElement('DIV'),
+  scroll_Progress          = document.createElement('DIV'),
+  blockIMGs                = document.getElementsByClassName('block-image'),
+  $body                    = document.body,
+  content_Style            = scroll_Content.style,
+  scroll_Bar_Style         = scroll_Bar.style,
+  progress_style           = scroll_Progress.style,
+  scroll_Position_Y        = 0, // default scroll position
+  scroll_Position_X        = 0, // default horizontal scroll position
+  scroll_Position          = 0, // default scroll value
+  scroll_Bar_Position      = 0, // default scrollbar pos
+  scroll_Current_Progress  = 0, // default scrollbar progress
+  parallax_Position        = 0, // default parallax position
+  dragStep                 = 0,
+  loaded                   = false,
+  horizontal               = false,
+  draggable                = false,
+  progress                 = false,
+  translate_Property       = 'translate3d(',
+  content_Transform, scroll_Transform, body_Height, window_Height, visible_Height, body_Width, window_Width, visible_Width, scrPrcs, clearScroll,i;
 
-if (content.classList.contains('horizontal')) theAxis = true;
+// SETTINGS
+var scrollSpeed   = 2,
+  FF_scrollSpeed  = 0.15 / scrollSpeed,
+  scroll_Step     = 200,
+  parallax_Speed  = 5,
+  parallax_Space  = parallax_Speed / 2.85,
+  drag_Speed      = 1.5,
+  easing_time     = 0.075;
 
-scrlBar.setAttribute('id', 'jmooth_scrollbar');
-$body.appendChild(scrlBar);
+if (scroll_Content.classList.contains('horizontal')) horizontal = true;
+if (scroll_Content.classList.contains('draggable')) draggable = true;
+
+scroll_Bar.setAttribute('id', 'jmooth_scrollbar');
+if (horizontal) scroll_Bar.classList.add('horizon_scrollbar');
+$body.appendChild(scroll_Bar);
 
 if (progress) {
-  scrlPrg.setAttribute('id', 'jmooth_scrollprogress');
-  $body.appendChild(scrlPrg);
+  scroll_Progress.setAttribute('id', 'jmooth_scrollprogress');
+  $body.appendChild(scroll_Progress);
 }
 
 var firefox = navigator.userAgent.indexOf('Firefox') > -1;
 
-// SETTINGS
-var scrollSpeed = 2, // scroll speed by divide. lower, faster
-  FFscrlSpeed = 0.15 / scrollSpeed, // scroll speed multiply for Firefox
-  scrollStep = 200, // pixel scrolled by arrow keys
-  prlSpeed = 5, // parallax speed
-  prlSpaceY = prlSpeed / 2.85, // parallax space ratio
-  ease = 0.075; // easing time
-
-if (firefox) scrollSpeed = FFscrlSpeed;
+if (firefox) scrollSpeed = FF_scrollSpeed;
 
 var addEvent = function(object, type, callback) {
   if (object == null || typeof(object) == 'undefined') return;
@@ -67,7 +68,7 @@ function debounce(func, wait, immediate) {
   var timeout;
   return function() {
     var context = this,
-      args = arguments;
+      args      = arguments;
     var later = function() {
       timeout = null;
       if (!immediate) func.apply(context, args);
@@ -80,50 +81,49 @@ function debounce(func, wait, immediate) {
 }
 
 var scrollRecall = debounce(function() {
-  //console.log('resized!');
 
-  if (!theAxis) {
-    bodyH = content.offsetHeight, //recall content Height
-    wdH = window.innerHeight, //recall window Height
-    vsbH = bodyH - wdH, // recalculate visible height
-    scrPrcs = wdH - scrlBar.offsetHeight; // recalculate scroll length
+  if (horizontal) {
+    body_Width         = scroll_Content.offsetWidth,
+    window_Width       = window.innerWidth,
+    visible_Width      = body_Width - window_Width,
+    scrPrcs            = window_Width - scroll_Bar.offsetWidth;
 
-    scrollYaxis = Math.max(vsbH * -1, scrollYaxis);
+    scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
 
-    trF = 'translate3d(0px,' + scrollPos + 'px,0)';
-    scF = 'translate3d(0px,' + (scrBarPos * -1) + 'px,0)';
+    content_Transform  = translate_Property + scroll_Position + 'px,0,0)';
+    scroll_Transform   = 'translate3d(' + (scroll_Bar_Position * -1) + 'px,0,0)';
   } else {
-    bodyW = content.offsetWidth, //recall content Height
-    wdW = window.innerWidth, //recall window Height
-    vsbW = bodyW - wdW, // recalculate visible height
-    scrPrcs = wdW - scrlBar.offsetWidth; // recalculate scroll length
+    body_Height        = scroll_Content.offsetHeight,
+    window_Height      = window.innerHeight,
+    visible_Height     = body_Height - window_Height,
+    scrPrcs            = window_Height - scroll_Bar.offsetHeight;
 
-    scrollXaxis = Math.max(vsbW * -1, scrollXaxis);
+    scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
 
-    trF = 'translate3d(' + scrollPos + 'px,0,0)';
-    scF = 'translate3d(' + (scrBarPos * -1) + 'px,0,0)';
+    content_Transform  = translate_Property + '0px,' + scroll_Position + 'px,0)';
+    scroll_Transform   = translate_Property + '0px,' + (scroll_Bar_Position * -1) + 'px,0)';
   }
 
-  cStyle['-webkit-transform'] = trF;
-  cStyle['transform'] = trF;
-  sStyle['-webkit-transform'] = scF;
-  sStyle['transform'] = scF;
+  content_Style['-webkit-transform']     = content_Transform;
+  content_Style['transform']             = content_Transform;
+  scroll_Bar_Style['-webkit-transform']  = scroll_Transform;
+  scroll_Bar_Style['transform']          = scroll_Transform;
 
-}, 0);
+}, 500);
 
 window.onload = function() {
 
 
-  if (!theAxis) {
-    bodyH = content.offsetHeight, // body Height
-    wdH = window.innerHeight, // window Height
-    vsbH = bodyH - wdH, // visible height (bodyH - windowH)
-    scrPrcs = wdH - scrlBar.offsetHeight; // total scroll length (windowH - scrollbarH)
+  if (horizontal) {
+    body_Width     = scroll_Content.offsetWidth,
+    window_Width   = window.innerWidth,
+    visible_Width  = body_Width - window_Width,
+    scrPrcs        = window_Width - scroll_Bar.offsetWidth;
   } else {
-    bodyW = content.offsetWidth, // body Height
-    wdW = window.innerWidth, // window Height
-    vsbW = bodyW - wdW, // visible height (bodyH - windowH)
-    scrPrcs = wdW - scrlBar.offsetWidth; // total scroll length (windowH - scrollbarH)
+    body_Height    = scroll_Content.offsetHeight,
+    window_Height  = window.innerHeight,
+    visible_Height = body_Height - window_Height,
+    scrPrcs        = window_Height - scroll_Bar.offsetHeight;
   }
 
   loaded = true;
@@ -140,10 +140,10 @@ window.onload = function() {
 /* CUSTOM FOR PARALLAX DEMO IMAGE */
 function prlBlockImg() {
   for (i = 0; i < blockIMGs.length; i++) {
-    if (!theAxis) {
-      blockIMGs[i].style.bottom = (prlSpaceY * i) + 'vh';
+    if (horizontal) {
+      blockIMGs[i].style.right  = (parallax_Speed * 1.25 * i) + 'vw';
     } else {
-      blockIMGs[i].style.right = (prlSpeed * 1.25 * i) + 'vw';
+      blockIMGs[i].style.bottom = (parallax_Space * i) + 'vh';
     }
   }
 }
@@ -157,14 +157,14 @@ document.addEventListener('wheel', function(event) {
     } else {
       $body.classList.add('im_scrolling');
     }
-    if (!theAxis) {
-      scrollYaxis += (event.deltaY / scrollSpeed) * -1; //otY.innerHTML = 'Original deltaY: ' + scrollYaxis;
-      scrollYaxis = Math.max(vsbH * -1, scrollYaxis); //mxY.innerHTML = 'Highest deltaY: ' + scrollYaxis;
-      scrollYaxis = Math.min(0, scrollYaxis); //mnY.innerHTML = 'Lowest deltaY: ' + scrollYaxis;
+    if (horizontal) {
+      scroll_Position_X += ((event.deltaY+event.deltaX) / scrollSpeed) * -1;
+      scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
+      scroll_Position_X  = Math.min(0, scroll_Position_X);
     } else {
-      scrollXaxis += ((event.deltaY+event.deltaX) / scrollSpeed) * -1; //otY.innerHTML = 'Original deltaY: ' + scrollYaxis;
-      scrollXaxis = Math.max(vsbW * -1, scrollXaxis); //mxY.innerHTML = 'Highest deltaY: ' + scrollYaxis;
-      scrollXaxis = Math.min(0, scrollXaxis); //mnY.innerHTML = 'Lowest deltaY: ' + scrollYaxis;
+      scroll_Position_Y += (event.deltaY / scrollSpeed) * -1;
+      scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
+      scroll_Position_Y  = Math.min(0, scroll_Position_Y);
     }
   }
 });
@@ -179,52 +179,52 @@ function jmoothScroller() {
   var scrP = 0,
     prlxVal = 0; // CUSTOM FOR PARALLAX DEMO IMAGE
 
-  if (!theAxis) {
-    scrP = scrollYaxis / vsbH * 100;
-    prlxVal = scrollYaxis / prlSpeed; // CUSTOM FOR PARALLAX DEMO IMAGE
+  if (horizontal) {
+    scrP    = scroll_Position_X / visible_Width * 100;
+    prlxVal = scroll_Position_X / parallax_Speed; // CUSTOM FOR PARALLAX DEMO IMAGE
   } else {
-    scrP = scrollXaxis / vsbW * 100;
-    prlxVal = scrollXaxis / prlSpeed; // CUSTOM FOR PARALLAX DEMO IMAGE
+    scrP    = scroll_Position_Y / visible_Height * 100;
+    prlxVal = scroll_Position_Y / parallax_Speed; // CUSTOM FOR PARALLAX DEMO IMAGE
   }
 
-  var sclP = scrP * scrPrcs / 100;
+  var sclP  = scrP * scrPrcs / 100;
 
   if (isNaN(sclP)) sclP = 0;
 
-  if (!theAxis) {
-    scrollPos += (scrollYaxis - scrollPos) * ease;
+  if (horizontal) {
+    scroll_Position   += (scroll_Position_X - scroll_Position) * easing_time;
   } else {
-    scrollPos += (scrollXaxis - scrollPos) * ease;
+    scroll_Position   += (scroll_Position_Y - scroll_Position) * easing_time;
   }
-  scrBarPos += (sclP - scrBarPos) * ease;
-  if (progress) scrProgess += (scrP - scrProgess) * ease;
+  scroll_Bar_Position += (sclP - scroll_Bar_Position) * easing_time;
+  if (progress) scroll_Current_Progress += (scrP - scroll_Current_Progress) * easing_time;
 
-  prlxPos += (prlxVal - prlxPos) * ease; // CUSTOM FOR PARALLAX DEMO IMAGE
+  parallax_Position   += (prlxVal - parallax_Position) * easing_time; // CUSTOM FOR PARALLAX DEMO IMAGE
 
-  if (!theAxis) {
-    trF = 'translate3d(0px,' + scrollPos + 'px,0)';
-    scF = 'translate3d(0px,' + (scrBarPos * -1) + 'px,0)';
+  if (horizontal) {
+    content_Transform  = translate_Property + scroll_Position + 'px,0,0)';
+    scroll_Transform   = translate_Property + (scroll_Bar_Position * -1) + 'px,0,0)';
   } else {
-    trF = 'translate3d(' + scrollPos + 'px,0,0)';
-    scF = 'translate3d(' + (scrBarPos * -1) + 'px,0,0)';
+    content_Transform  = translate_Property + '0,' + scroll_Position + 'px,0)';
+    scroll_Transform   = translate_Property + '0,' + (scroll_Bar_Position * -1) + 'px,0)';
   }
 
   /* CUSTOM FOR PARALLAX DEMO IMAGE */
   for (i = 0; i < blockIMGs.length; i++) {
-    if (!theAxis) {
-      blockIMGs[i].style['transform'] = 'translate3d(0px,' + (prlxPos * -1) + 'px,0)';
+    if (horizontal) {
+      blockIMGs[i].style['transform'] = translate_Property + (parallax_Position * 0.8 * -1) + 'px,0,0)';
     } else {
-      blockIMGs[i].style['transform'] = 'translate3d(' + (prlxPos * 0.8 * -1) + 'px,0,0)';
+      blockIMGs[i].style['transform'] = translate_Property + '0,' + (parallax_Position * -1) + 'px,0)';
     }
   }
   /* END CUSTOM FOR PARALLAX DEMO IMAGE */
 
-  cStyle['-webkit-transform'] = trF;
-  cStyle['transform'] = trF;
-  sStyle['-webkit-transform'] = scF;
-  sStyle['transform'] = scF;
+  content_Style['-webkit-transform']     = content_Transform;
+  content_Style['transform']             = content_Transform;
+  scroll_Bar_Style['-webkit-transform']  = scroll_Transform;
+  scroll_Bar_Style['transform']          = scroll_Transform;
 
-  if (progress) pStyle.height = Math.abs(scrProgess) + '%';
+  if (progress) progress_style.height = Math.abs(scroll_Current_Progress) + '%';
 }
 
 document.addEventListener('keydown', function(event) {
@@ -237,16 +237,65 @@ document.addEventListener('keydown', function(event) {
     } else {
       $body.classList.add('im_scrolling');
     }
-    if (!theAxis) {
-      if (key == 38) scrollYaxis += scrollStep;
-      if (key == 40) scrollYaxis -= scrollStep;
-      scrollYaxis = Math.max(vsbH * -1, scrollYaxis); //mxY.innerHTML = 'Highest deltaY: ' + scrollYaxis;
-      scrollYaxis = Math.min(0, scrollYaxis); //mnY.innerHTML = 'Lowest deltaY: ' + scrollYaxis;
+    if (horizontal) {
+      if (key == 37) scroll_Position_X += scroll_Step;
+      if (key == 39) scroll_Position_X -= scroll_Step;
+      scroll_Position_X = Math.max(visible_Width * -1, scroll_Position_X);
+      scroll_Position_X = Math.min(0, scroll_Position_X);
     } else {
-      if (key == 37) scrollXaxis += scrollStep;
-      if (key == 39) scrollXaxis -= scrollStep;
-      scrollXaxis = Math.max(vsbW * -1, scrollXaxis); //mxY.innerHTML = 'Highest deltaY: ' + scrollYaxis;
-      scrollXaxis = Math.min(0, scrollXaxis); //mnY.innerHTML = 'Lowest deltaY: ' + scrollYaxis;
+      if (key == 38) scroll_Position_Y += scroll_Step;
+      if (key == 40) scroll_Position_Y -= scroll_Step;
+      scroll_Position_Y = Math.max(visible_Height * -1, scroll_Position_Y);
+      scroll_Position_Y = Math.min(0, scroll_Position_Y);
     }
   }
+});
+
+var dragging = false,
+  startDrag = 0;
+
+document.addEventListener('mousedown', function(event) {
+  if (loaded && draggable) {
+    event.preventDefault();
+    var posX = event.clientX,
+      posY = event.clientY;
+    if (horizontal) {
+      startDrag = posX;
+    } else {
+      startDrag = posY;
+    }
+    dragging = true;
+  }
+});
+
+document.addEventListener('mousemove', function(event) {
+  if (loaded && draggable && dragging) {
+    event.preventDefault();
+    $body.classList.add('im_dragging');
+
+    if ($body.classList.contains('im_scrolling')) {
+      clearTimeout(clearScroll);
+      clearScroll = setTimeout(closeScroll, 250);
+    } else {
+      $body.classList.add('im_scrolling');
+    }
+
+    if (horizontal) {
+      var posX = event.clientX;
+      dragStep = ( startDrag - posX ) / 10 * drag_Speed;
+      scroll_Position_X -= dragStep;
+      scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
+      scroll_Position_X  = Math.min(0, scroll_Position_X);
+    } else {
+      var posY = event.clientY;
+      dragStep = ( startDrag - posY ) / 10 * drag_Speed;
+      scroll_Position_Y -= dragStep;
+      scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
+      scroll_Position_Y  = Math.min(0, scroll_Position_Y);
+    }
+  }
+});
+
+document.addEventListener('mouseup', function(event) {
+  if (loaded && draggable) event.preventDefault(); dragging = false; $body.classList.remove('im_dragging');
 });
