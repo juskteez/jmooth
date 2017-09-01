@@ -11,6 +11,7 @@ var scroll_Content         = document.getElementById('content'),
   scroll_Progress          = document.createElement('DIV'),
   blockIMGs                = document.getElementsByClassName('block-image'),
   $body                    = document.body,
+  $bodyClass               = $body.classList,
   content_Style            = scroll_Content.style,
   scroll_Bar_Style         = scroll_Bar.style,
   progress_style           = scroll_Progress.style,
@@ -20,32 +21,49 @@ var scroll_Content         = document.getElementById('content'),
   scroll_Bar_Position      = 0, // default scrollbar pos
   scroll_Current_Progress  = 0, // default scrollbar progress
   parallax_Position        = 0, // default parallax position
-  dragStep                 = 0,
   loaded                   = false,
   horizontal               = false,
   draggable                = false,
   progress                 = false,
   translate_Property       = 'translate3d(',
-  content_Transform, scroll_Transform, body_Height, window_Height, visible_Height, body_Width, window_Width, visible_Width, scrPrcs, clearScroll,i;
+  content_Transform,
+  scroll_Transform,
+  body_Height,
+  window_Height,
+  visible_Height,
+  body_Width,
+  window_Width,
+  visible_Width,
+  scrPrcs,
+  clearScroll,
+  posX,
+  posY,
+  i;
 
 // SETTINGS
-var scrollSpeed   = 2,
-  FF_scrollSpeed  = 0.15 / scrollSpeed,
-  scroll_Step     = 200,
-  parallax_Speed  = 5,
-  parallax_Space  = parallax_Speed / 2.85,
-  drag_Speed      = 1.5,
-  easing_time     = 0.075;
+var scrollSpeed      = 2,
+  FF_scrollSpeed     = 0.15 / scrollSpeed,
+  scroll_Step        = 200,
+  parallax_Speed     = 5,
+  parallax_Space     = parallax_Speed / 2.85,
+  drag_Speed         = 1.5,
+  easing_time        = 0.075,
+  page_Loaded_Class  = 'page_loaded',
+  scrollbar_id       = 'jmooth_scrollbar',
+  scroll_Progress_id = 'jmooth_scrollprogress',
+  scrolling_Class    = 'im_scrolling',
+  Dragging_Class     = 'im_dragging',
+  bar_Dragging_Class = 'scroll_bar_dragging';
 
 if (scroll_Content.classList.contains('horizontal')) horizontal = true;
 if (scroll_Content.classList.contains('draggable')) draggable = true;
 
-scroll_Bar.setAttribute('id', 'jmooth_scrollbar');
+scroll_Bar.setAttribute('id', scrollbar_id);
 if (horizontal) scroll_Bar.classList.add('horizon_scrollbar');
 $body.appendChild(scroll_Bar);
 
 if (progress) {
-  scroll_Progress.setAttribute('id', 'jmooth_scrollprogress');
+  scroll_Progress.setAttribute('id', scroll_Progress_id);
   $body.appendChild(scroll_Progress);
 }
 
@@ -91,7 +109,7 @@ var scrollRecall = debounce(function() {
     scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
 
     content_Transform  = translate_Property + scroll_Position + 'px,0,0)';
-    scroll_Transform   = 'translate3d(' + (scroll_Bar_Position * -1) + 'px,0,0)';
+    scroll_Transform   = translate_Property + (scroll_Bar_Position * -1) + 'px,0,0)';
   } else {
     body_Height        = scroll_Content.offsetHeight,
     window_Height      = window.innerHeight,
@@ -111,8 +129,17 @@ var scrollRecall = debounce(function() {
 
 }, 500);
 
-window.onload = function() {
+var limitScroll = function() {
+  if (horizontal) {
+    scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
+    scroll_Position_X  = Math.min(0, scroll_Position_X);
+  } else {
+    scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
+    scroll_Position_Y  = Math.min(0, scroll_Position_Y);
+  }
+};
 
+window.onload = function() {
 
   if (horizontal) {
     body_Width     = scroll_Content.offsetWidth,
@@ -128,7 +155,7 @@ window.onload = function() {
 
   loaded = true;
 
-  $body.classList.add('page_loaded');
+  $bodyClass.add(page_Loaded_Class);
 
   prlBlockImg();
   jmoothScroller();
@@ -151,26 +178,25 @@ function prlBlockImg() {
 
 document.addEventListener('wheel', function(event) {
   if (loaded) {
-    if ($body.classList.contains('im_scrolling')) {
+    if ($bodyClass.contains(scrolling_Class)) {
       clearTimeout(clearScroll);
       clearScroll = setTimeout(closeScroll, 250);
     } else {
-      $body.classList.add('im_scrolling');
+      $bodyClass.add(scrolling_Class);
     }
     if (horizontal) {
       scroll_Position_X += ((event.deltaY+event.deltaX) / scrollSpeed) * -1;
-      scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
-      scroll_Position_X  = Math.min(0, scroll_Position_X);
     } else {
       scroll_Position_Y += (event.deltaY / scrollSpeed) * -1;
-      scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
-      scroll_Position_Y  = Math.min(0, scroll_Position_Y);
     }
+
+    limitScroll();
+
   }
 });
 
 function closeScroll() {
-  $body.classList.remove('im_scrolling');
+  $bodyClass.remove(scrolling_Class);
 }
 
 function jmoothScroller() {
@@ -231,71 +257,71 @@ document.addEventListener('keydown', function(event) {
   var key = event.which || event.keyCode || event.charCode;
   if (loaded && (key == 37 || key == 38 || key == 39 || key == 40)) {
     event.preventDefault();
-    if ($body.classList.contains('im_scrolling')) {
+    if ($bodyClass.contains(scrolling_Class)) {
       clearTimeout(clearScroll);
       clearScroll = setTimeout(closeScroll, 250);
     } else {
-      $body.classList.add('im_scrolling');
+      $bodyClass.add(scrolling_Class);
     }
     if (horizontal) {
       if (key == 37) scroll_Position_X += scroll_Step;
       if (key == 39) scroll_Position_X -= scroll_Step;
-      scroll_Position_X = Math.max(visible_Width * -1, scroll_Position_X);
-      scroll_Position_X = Math.min(0, scroll_Position_X);
     } else {
       if (key == 38) scroll_Position_Y += scroll_Step;
       if (key == 40) scroll_Position_Y -= scroll_Step;
-      scroll_Position_Y = Math.max(visible_Height * -1, scroll_Position_Y);
-      scroll_Position_Y = Math.min(0, scroll_Position_Y);
     }
+
+    limitScroll();
+
   }
 });
 
 var dragging = false,
+  scroll_Bar_Dragging = false,
   startDrag = 0;
 
 document.addEventListener('mousedown', function(event) {
-  if (loaded && draggable) {
+  var the_target = event.target;
+  if (the_target.id == scrollbar_id) scroll_Bar_Dragging = true;
+
+  if (loaded && draggable && the_target.id != scrollbar_id) {
     event.preventDefault();
-    var posX = event.clientX,
-      posY = event.clientY;
-    if (horizontal) {
-      startDrag = posX;
-    } else {
-      startDrag = posY;
-    }
+
+    (horizontal) ? startDrag = event.clientX : startDrag = event.clientY;
+
     dragging = true;
   }
 });
 
 document.addEventListener('mousemove', function(event) {
-  if (loaded && draggable && dragging) {
+  if (loaded && (dragging || scroll_Bar_Dragging)) {
     event.preventDefault();
-    $body.classList.add('im_dragging');
 
-    if ($body.classList.contains('im_scrolling')) {
+    if ($bodyClass.contains(scrolling_Class)) {
       clearTimeout(clearScroll);
       clearScroll = setTimeout(closeScroll, 250);
     } else {
-      $body.classList.add('im_scrolling');
+      $bodyClass.add(scrolling_Class);
     }
 
-    if (horizontal) {
-      var posX = event.clientX;
-      dragStep = ( startDrag - posX ) / 10 * drag_Speed;
-      scroll_Position_X -= dragStep;
-      scroll_Position_X  = Math.max(visible_Width * -1, scroll_Position_X);
-      scroll_Position_X  = Math.min(0, scroll_Position_X);
-    } else {
-      var posY = event.clientY;
-      dragStep = ( startDrag - posY ) / 10 * drag_Speed;
-      scroll_Position_Y -= dragStep;
-      scroll_Position_Y  = Math.max(visible_Height * -1, scroll_Position_Y);
-      scroll_Position_Y  = Math.min(0, scroll_Position_Y);
+    (horizontal) ? posX = event.clientX : posY = event.clientY;
+
+    if (scroll_Bar_Dragging) {
+      $bodyClass.add(bar_Dragging_Class);
+      (horizontal) ? scroll_Position_X = posX / window_Width * visible_Width * -1 : scroll_Position_Y = posY / window_Height * visible_Height * -1;
     }
+
+    if (dragging) {
+      $bodyClass.add(Dragging_Class);
+      (horizontal) ? scroll_Position_X -= ( startDrag - posX ) / 10 * drag_Speed : scroll_Position_Y -= ( startDrag - posY ) / 10 * drag_Speed;
+    }
+
+    limitScroll();
+
   }
+
 });
 
 document.addEventListener('mouseup', function(event) {
-  if (loaded && draggable) event.preventDefault(); dragging = false; $body.classList.remove('im_dragging');
+  if (loaded && (dragging || scroll_Bar_Dragging)) event.preventDefault(); dragging = false; $bodyClass.remove(Dragging_Class); $bodyClass.remove(bar_Dragging_Class); scroll_Bar_Dragging = false; scroll_Bar_Dragging = false;
 });

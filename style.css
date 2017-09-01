@@ -84,12 +84,17 @@ body.page_loaded {
   top: 0;
   z-index: 9999;
   opacity: 0;
-  -webkit-transition: 1s opacity ease-in-out;
-  -o-transition: 1s opacity ease-in-out;
-  transition: 1s opacity ease-in-out;
+  -webkit-transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
+  -o-transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
+  transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
   -webkit-transition-delay: 0.5s;
   -o-transition-delay: 0.5s;
   transition-delay: 0.5s;
+}
+
+.scroll_bar_dragging #jmooth_scrollbar,
+#jmooth_scrollbar:hover {
+  width: 12px;
 }
 
 .horizontal ~ #jmooth_scrollbar,
@@ -102,6 +107,12 @@ body.page_loaded {
   bottom: 0;
 }
 
+.scroll_bar_dragging #jmooth_scrollbar.horizon_scrollbar,
+.horizontal ~ #jmooth_scrollbar:hover,
+#jmooth_scrollbar.horizon_scrollbar:hover {
+  height: 12px;
+}
+
 #jmooth_scrollprogress {
   position: fixed;
   width: 6px;
@@ -112,14 +123,16 @@ body.page_loaded {
   z-index: 9999;
 }
 
-.im_scrolling #jmooth_scrollbar {
+.im_scrolling #jmooth_scrollbar,
+#jmooth_scrollbar:hover {
   opacity: 1;
-  -webkit-transition: 0.3s opacity ease-in-out;
-  -o-transition: 0.3s opacity ease-in-out;
-  transition: 0.3s opacity ease-in-out;
+  -webkit-transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
+  -o-transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
+  transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
   -webkit-transition-delay: 0s;
   -o-transition-delay: 0s;
   transition-delay: 0s;
+  cursor: pointer;
 }
 
 .im_scrolling .block {

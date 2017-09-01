@@ -10,13 +10,15 @@ Wanted to build something for my own, exspecially scrolling experience. I've bee
  * scrolling progress
  * scroll bar
  * scroll with wheel and arrow keys
+ * scroll by dragging scrollbar
+ * scroll by dragging the page
 
 
 **Future features/improvement:**
-1. scroll with scrollbar
-2. smooth scroll with holding arrow keys
-3. scroll with drag
-4. scroll on touch device
+1. smooth scroll while holding arrow keys
+2. scroll on touch device
+
+_feel free to suggest any feature_
 
 ##
 
