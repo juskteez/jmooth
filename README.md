@@ -12,11 +12,14 @@ Wanted to build something for my own, exspecially scrolling experience. I've bee
  * scroll with wheel and arrow keys
  * scroll by dragging scrollbar
  * scroll by dragging the page
+ * scroll on touch device
 
 
-**Future features/improvement:**
-1. smooth scroll while holding arrow keys
-2. scroll on touch device
+**future features/improvement:**
+1. scroll smoothly while holding arrow keys
+2. scroll position extractor (pixels & percents for custom event such as parallax)
+3. callback functions
+4. …
 
 _feel free to suggest any feature_
 

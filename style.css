@@ -26,6 +26,7 @@ body.page_loaded {
   width: 100%;
   top: 0;
   left: 0;
+  will-change: transform;
 }
 
 #vS #content.draggable,
@@ -84,6 +85,8 @@ body.page_loaded {
   top: 0;
   z-index: 9999;
   opacity: 0;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
   -webkit-transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
   -o-transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
   transition: 1s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
@@ -118,6 +121,8 @@ body.page_loaded {
   width: 6px;
   height: 100%;
   background-color: rgba(88, 88, 88, 0.9);
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
   top: 0;
   left: 0;
   z-index: 9999;
@@ -126,9 +131,9 @@ body.page_loaded {
 .im_scrolling #jmooth_scrollbar,
 #jmooth_scrollbar:hover {
   opacity: 1;
-  -webkit-transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
-  -o-transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
-  transition: 0.3s opacity ease-in-out, 0.3s width ease, 0.3s height ease;
+  -webkit-transition: 0.2s opacity ease-in-out, 0.2s width ease, 0.2s height ease;
+  -o-transition: 0.2s opacity ease-in-out, 0.2s width ease, 0.2s height ease;
+  transition: 0.2s opacity ease-in-out, 0.2s width ease, 0.2s height ease;
   -webkit-transition-delay: 0s;
   -o-transition-delay: 0s;
   transition-delay: 0s;
