@@ -19,7 +19,6 @@ var scroll_Area_id   = 'content',
   horizon_Bar_Class  = 'horizon_scrollbar',
   scrollSpeed        = 2,
   scroll_Step        = 200,
-  parallax_Speed     = 5, // min -10; max 10; reverse by negative value
   drag_Speed         = 1.5,
   touch_Speed        = 4,
   easing_time        = 0.075;
@@ -29,7 +28,6 @@ var scroll_Area_id   = 'content',
 var scroll_Content         = document.getElementById(scroll_Area_id),
   scroll_Bar               = document.createElement('DIV'),
   scroll_Progress          = document.createElement('DIV'),
-  blockIMGs                = document.getElementsByClassName('block-image'), // CUSTOM FOR PARALLAX DEMO IMAGE
   $body                    = document.body,
   $bodyClass               = $body.classList,
   content_Style            = scroll_Content.style,
@@ -40,7 +38,6 @@ var scroll_Content         = document.getElementById(scroll_Area_id),
   scroll_Position          = 0, // default scroll value
   scroll_Bar_Position      = 0, // default scrollbar pos
   scroll_Current_Progress  = 0, // default scrollbar progress
-  parallax_Position        = 0, // default parallax position
   translate_Property       = 'translate3d(',
   loaded                   = false,
   horizontal               = false,
@@ -48,6 +45,7 @@ var scroll_Content         = document.getElementById(scroll_Area_id),
   progress                 = false,
   dragging                 = false,
   scroll_Bar_Dragging      = false,
+  scrP                     = 0,
   startDrag                = 0,
   touching                 = false,
   touch_Move               = 0,
@@ -66,6 +64,52 @@ var scroll_Content         = document.getElementById(scroll_Area_id),
   posY,
   i;
 
+// DECLAERING CUSTOM VARIABLES
+var prlxVal          = 0,
+  parallax_Position  = 0, // default parallax position
+  parallax_Speed     = 5, // min -10; max 10; reverse by negative value
+  blockIMGs          = document.getElementsByClassName('block-image'); // CUSTOM FOR PARALLAX DEMO IMAGE
+
+var after_Load = function() {
+  // CUSTOM THINGS HAPPENDS RIGHT AFTER PAGE LOADED
+  if (parallax_Speed > 10) {
+    parallax_Speed = 1;
+  } else if (parallax_Speed == 0) {
+    parallax_Speed = 0;
+  } else if (parallax_Speed < 0) {
+    parallax_Speed = -11 - parallax_Speed;
+  } else if (parallax_Speed < -10) {
+    parallax_Speed = -1;
+  } else {
+    parallax_Speed = 11 - parallax_Speed;
+  }
+
+  for (i = 0; i < blockIMGs.length; i++) {
+    (horizontal) ? blockIMGs[i].style.right  = (parallax_Speed * 1.25 * i) + 'vw' : blockIMGs[i].style.bottom = (parallax_Speed * i) + 'vh';
+  }
+};
+
+var before_Scroll = function() {
+  // CUSTOM THINGS HAPPENDS RIGHT BEFORE YOU SCROLL
+};
+
+var after_Scroll = function() {
+  // CUSTOM THINGS HAPPENDS RIGHT AFTER YOU SCROLL
+
+  (horizontal) ? prlxVal = scroll_Position_X / parallax_Speed : prlxVal = scroll_Position_Y / parallax_Speed;
+
+  parallax_Position += (prlxVal - parallax_Position) * easing_time;
+
+  for (i = 0; i < blockIMGs.length; i++) {
+    if (horizontal) {
+      blockIMGs[i].style['transform'] = translate_Property + (parallax_Position * 0.8 * -1) + 'px,0,0)';
+    } else {
+      blockIMGs[i].style['transform'] = translate_Property + '0,' + (parallax_Position * -1) + 'px,0)';
+    }
+  }
+
+};
+
 if (scroll_Content.classList.contains(horizontal_Class)) horizontal = true;
 if (scroll_Content.classList.contains(draggable_Class)) draggable = true;
 
@@ -81,18 +125,6 @@ if (progress) {
 var firefox = navigator.userAgent.indexOf('Firefox') > -1;
 
 if (firefox) scrollSpeed = 0.15 / scrollSpeed;
-
-if (parallax_Speed > 10) {
-  parallax_Speed = 1;
-} else if (parallax_Speed == 0) {
-  parallax_Speed = 0;
-} else if (parallax_Speed < 0) {
-  parallax_Speed = -11 - parallax_Speed;
-} else if (parallax_Speed < -10) {
-  parallax_Speed = -1;
-} else {
-  parallax_Speed = 11 - parallax_Speed;
-}
 
 var addEvent = function(object, type, callback) {
   if (object == null || typeof(object) == 'undefined') return;
@@ -173,6 +205,45 @@ var limitScroll = function() {
   }
 };
 
+function closeScroll() {
+  $bodyClass.remove(scrolling_Class);
+}
+
+function jmoothScroller() {
+  requestAnimationFrame(jmoothScroller);
+
+  (horizontal) ? scrP = scroll_Position_X / visible_Width * 100 : scrP = scroll_Position_Y / visible_Height * 100;
+
+  var sclP  = scrP * scrPrcs / 100;
+
+  if (isNaN(sclP)) sclP = 0;
+
+  (horizontal) ? scroll_Position += (scroll_Position_X - scroll_Position) * easing_time : scroll_Position += (scroll_Position_Y - scroll_Position) * easing_time;
+
+  scroll_Bar_Position += (sclP - scroll_Bar_Position) * easing_time;
+
+  if (progress) scroll_Current_Progress += (scrP - scroll_Current_Progress) * easing_time;
+
+  if (horizontal) {
+    content_Transform  = translate_Property + scroll_Position + 'px,0,0)';
+    scroll_Transform   = translate_Property + (scroll_Bar_Position * -1) + 'px,0,0)';
+  } else {
+    content_Transform  = translate_Property + '0,' + scroll_Position + 'px,0)';
+    scroll_Transform   = translate_Property + '0,' + (scroll_Bar_Position * -1) + 'px,0)';
+  }
+
+  // BEFORE SCROLL
+  before_Scroll();
+
+  content_Transformer(content_Transform,scroll_Transform);
+
+  if (progress) progress_style.height = Math.abs(scroll_Current_Progress) + '%';
+
+  // AFTER SCROLL
+  after_Scroll();
+
+}
+
 window.onload = function() {
 
   if (horizontal) {
@@ -191,93 +262,23 @@ window.onload = function() {
 
   $bodyClass.add(page_Loaded_Class);
 
-  prlBlockImg();
+  after_Load();
   jmoothScroller();
 
   addEvent(window, 'resize', scrollRecall, 250);
 
 };
 
-/* CUSTOM FOR PARALLAX DEMO IMAGE */
-function prlBlockImg() {
-  for (i = 0; i < blockIMGs.length; i++) {
-    if (horizontal) {
-      blockIMGs[i].style.right  = (parallax_Speed * 1.25 * i) + 'vw';
-    } else {
-      blockIMGs[i].style.bottom = (parallax_Speed * i) + 'vh';
-    }
-  }
-}
-/* END CUSTOM FOR PARALLAX DEMO IMAGE */
-
 document.addEventListener('wheel', function(event) {
   if (loaded) {
     scroll_Proceeding();
-    if (horizontal) {
-      scroll_Position_X += ((event.deltaY+event.deltaX) / scrollSpeed) * -1;
-    } else {
-      scroll_Position_Y += (event.deltaY / scrollSpeed) * -1;
-    }
+
+    (horizontal) ? scroll_Position_X += ((event.deltaY+event.deltaX) / scrollSpeed) * -1 : scroll_Position_Y += (event.deltaY / scrollSpeed) * -1;
 
     limitScroll();
 
   }
 });
-
-function closeScroll() {
-  $bodyClass.remove(scrolling_Class);
-}
-
-function jmoothScroller() {
-  requestAnimationFrame(jmoothScroller);
-
-  var scrP = 0,
-    prlxVal = 0; // CUSTOM FOR PARALLAX DEMO IMAGE
-
-  if (horizontal) {
-    scrP    = scroll_Position_X / visible_Width * 100;
-    prlxVal = scroll_Position_X / parallax_Speed; // CUSTOM FOR PARALLAX DEMO IMAGE
-  } else {
-    scrP    = scroll_Position_Y / visible_Height * 100;
-    prlxVal = scroll_Position_Y / parallax_Speed; // CUSTOM FOR PARALLAX DEMO IMAGE
-  }
-
-  var sclP  = scrP * scrPrcs / 100;
-
-  if (isNaN(sclP)) sclP = 0;
-
-  if (horizontal) {
-    scroll_Position   += (scroll_Position_X - scroll_Position) * easing_time;
-  } else {
-    scroll_Position   += (scroll_Position_Y - scroll_Position) * easing_time;
-  }
-  scroll_Bar_Position += (sclP - scroll_Bar_Position) * easing_time;
-  if (progress) scroll_Current_Progress += (scrP - scroll_Current_Progress) * easing_time;
-
-  parallax_Position   += (prlxVal - parallax_Position) * easing_time; // CUSTOM FOR PARALLAX DEMO IMAGE
-
-  if (horizontal) {
-    content_Transform  = translate_Property + scroll_Position + 'px,0,0)';
-    scroll_Transform   = translate_Property + (scroll_Bar_Position * -1) + 'px,0,0)';
-  } else {
-    content_Transform  = translate_Property + '0,' + scroll_Position + 'px,0)';
-    scroll_Transform   = translate_Property + '0,' + (scroll_Bar_Position * -1) + 'px,0)';
-  }
-
-  /* CUSTOM FOR PARALLAX DEMO IMAGE */
-  for (i = 0; i < blockIMGs.length; i++) {
-    if (horizontal) {
-      blockIMGs[i].style['transform'] = translate_Property + (parallax_Position * 0.8 * -1) + 'px,0,0)';
-    } else {
-      blockIMGs[i].style['transform'] = translate_Property + '0,' + (parallax_Position * -1) + 'px,0)';
-    }
-  }
-  /* END CUSTOM FOR PARALLAX DEMO IMAGE */
-
-  content_Transformer(content_Transform,scroll_Transform);
-
-  if (progress) progress_style.height = Math.abs(scroll_Current_Progress) + '%';
-}
 
 document.addEventListener('keydown', function(event) {
   var key = event.which || event.keyCode || event.charCode;
@@ -361,7 +362,7 @@ $body.addEventListener('touchstart', function(event) {
   }
 }, {passive: false});
 
-document.addEventListener('touchmove', function(event) {
+$body.addEventListener('touchmove', function(event) {
   touch_Object = event.changedTouches[0];
 
   if (loaded && touching) {
@@ -382,10 +383,10 @@ var cancel_Touch = function() {
   }
 };
 
-document.addEventListener('touchend', function() {
+$body.addEventListener('touchend', function() {
   cancel_Touch();
 });
 
-document.addEventListener('touchcancel', function() {
+$body.addEventListener('touchcancel', function() {
   cancel_Touch();
 });
